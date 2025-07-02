@@ -7,107 +7,77 @@ use Illuminate\Http\Request;
 use App\Models\EnergiListrik;
 use Illuminate\Support\Facades\DB;
 
-
 class EnergiListrikController extends Controller
 {
     public function index(Request $request)
     {
-        $data = EnergiListrik::orderBy('waktu', 'asc')->take(20)->get();
+        $latestData = EnergiListrik::orderBy('waktu', 'desc')->take(20)->get()->reverse();
+        //$data = EnergiListrik::orderBy('waktu', 'asc')->take(20)->get();
 
-        // $labels = $data->pluck('waktu')->map(function ($item) {
-        //     return $item->format('H:i:s');
-        // });
-        $labels = $data->pluck('waktu')->map(function ($item) {
-            return Carbon::parse($item)->format('H:i:s');
+        $realtimeLabels = $latestData->pluck('waktu')->map(function ($item) {
+            return \Carbon\Carbon::parse($item)->format('H:i:s');
         });
-        $tegangan_r = $data->pluck('tegangan_r');
-        $tegangan_s = $data->pluck('tegangan_s');
-        $tegangan_t = $data->pluck('tegangan_t');
 
-        $arus_r = $data->pluck('arus_r');
-        $arus_s = $data->pluck('arus_s');
-        $arus_t = $data->pluck('arus_t');
+        // Tegangan (V)
+        $tegangan_r = $latestData->pluck('tegangan_r');
+        $tegangan_s = $latestData->pluck('tegangan_s');
+        $tegangan_t = $latestData->pluck('tegangan_t');
+        $v_rs = $latestData->pluck('voltage_rs');
+        $v_st = $latestData->pluck('voltage_st');
+        $v_tr = $latestData->pluck('voltage_tr');
 
-        // Hitung VLL
-        $v_rs = [];
-        $v_st = [];
-        $v_tr = [];
+        // Arus (A)
+        $arus_r = $latestData->pluck('arus_r');
+        $arus_s = $latestData->pluck('arus_s');
+        $arus_t = $latestData->pluck('arus_t');
 
-        foreach ($data as $row) {
-            $vr = $row->tegangan_r;
-            $vs = $row->tegangan_s;
-            $vt = $row->tegangan_t;
+        // Daya (W)
+        $daya_r = $latestData->pluck('daya_r');
+        $daya_s = $latestData->pluck('daya_s');
+        $daya_t = $latestData->pluck('daya_t');
 
-            $v_rs[] = sqrt(pow($vr, 2) + pow($vs, 2) - 2 * $vr * $vs * cos(deg2rad(120)));
-            $v_st[] = sqrt(pow($vs, 2) + pow($vt, 2) - 2 * $vs * $vt * cos(deg2rad(120)));
-            $v_tr[] = sqrt(pow($vt, 2) + pow($vr, 2) - 2 * $vt * $vr * cos(deg2rad(120)));
-        }
-        $interval = $request->get('interval', 1800); // default 30 menit
-
-        // Agregasi data per waktu
-        $data = DB::table('energi_listrik')
+        $interval = $request->get('interval', 1800); // Default 30 menit (1800 detik)
+        // Kumpulin data untuk ditampilkan dalam bentuk interval
+        $aggregatedData = DB::table('energi_listrik')
             ->selectRaw('
                 FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(waktu)/?) * ?) as waktu_interval,
                 MAX(energi_r) as energi_r,
                 MAX(energi_s) as energi_s,
-                MAX(energi_t) as energi_t
+                MAX(energi_t) as energi_t,
+                AVG(frekuensi_r) as frekuensi_r,
+                AVG(frekuensi_s) as frekuensi_s,
+                AVG(frekuensi_t) as frekuensi_t,
+                AVG(faktor_daya_r) as faktor_daya_r,
+                AVG(faktor_daya_s) as faktor_daya_s,
+                AVG(faktor_daya_t) as faktor_daya_t
             ', [$interval, $interval])
             ->groupBy('waktu_interval')
-            ->orderBy('waktu_interval')
+            ->orderBy('waktu_interval', 'asc')
             ->get();
 
-        $labels = $data->pluck('waktu_interval')->map(function ($item) {
+        $intervalLabels = $aggregatedData->pluck('waktu_interval')->map(function ($item) {
             return \Carbon\Carbon::parse($item)->format('H:i');
         });
 
-        $energi_r = $data->pluck('energi_r');
-        $energi_s = $data->pluck('energi_s');
-        $energi_t = $data->pluck('energi_t');
+        // energi (kWh)
+        $energi_r = $aggregatedData->pluck('energi_r');
+        $energi_s = $aggregatedData->pluck('energi_s');
+        $energi_t = $aggregatedData->pluck('energi_t');
 
-        $data = DB::table('energi_listrik')
-            ->selectRaw('
-                FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(waktu)/?) * ?) as waktu_interval,
-                MAX(frekuensi_r) as frekuensi_r,
-                MAX(frekuensi_s) as frekuensi_s,
-                MAX(frekuensi_t) as frekuensi_t
-            ', [$interval, $interval])
-            ->groupBy('waktu_interval')
-            ->orderBy('waktu_interval')
-            ->get();
+        //frekuensi(Hz)
+        $frekuensi_r = $aggregatedData->pluck('frekuensi_r');
+        $frekuensi_s = $aggregatedData->pluck('frekuensi_s');
+        $frekuensi_t = $aggregatedData->pluck('frekuensi_t');
 
-        $labels = $data->pluck('waktu_interval')->map(function ($item) {
-            return \Carbon\Carbon::parse($item)->format('H:i');
-        });
+        // faktor daya 
+        $faktor_daya_r = $aggregatedData->pluck('faktor_daya_r');
+        $faktor_daya_s = $aggregatedData->pluck('faktor_daya_s');
+        $faktor_daya_t = $aggregatedData->pluck('faktor_daya_t');
 
-        $frekuensi_r = $data->pluck('frekuensi_r');
-        $frekuensi_s = $data->pluck('frekuensi_s');
-        $frekuensi_t = $data->pluck('frekuensi_t');
-
-        // Ambil data cosphi per interval
-        $data = DB::table('energi_listrik')
-            ->selectRaw('
-                FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(waktu)/?) * ?) as waktu_interval,
-                MAX(faktor_daya_r) as faktor_daya_r,
-                MAX(faktor_daya_s) as faktor_daya_s,
-                MAX(faktor_daya_t) as faktor_daya_t
-            ', [$interval, $interval])
-            ->groupBy('waktu_interval')
-            ->orderBy('waktu_interval')
-            ->get();
-
-        // Labels waktu dan data cosphi per fasa
-        $labels = $data->pluck('waktu_interval')->map(function ($item) {
-            return \Carbon\Carbon::parse($item)->format('H:i');
-        });
-
-        $faktor_daya_r = $data->pluck('faktor_daya_r');
-        $faktor_daya_s = $data->pluck('faktor_daya_s');
-        $faktor_daya_t = $data->pluck('faktor_daya_t');
-
-
-    // $energi = $data->pluck('energi');
+        // Kirim ke view
         return view('dashboard', compact(
-            'labels', 
+            'realtimeLabels', // Labels untuk grafik real-time
+            'intervalLabels', // Labels untuk grafik interval
             'tegangan_r', 
             'tegangan_s', 
             'tegangan_t',
@@ -117,6 +87,9 @@ class EnergiListrikController extends Controller
             'arus_r',
             'arus_s',
             'arus_t',
+            'daya_r', 
+            'daya_s', 
+            'daya_t',
             'energi_r',
             'energi_s',
             'energi_t',

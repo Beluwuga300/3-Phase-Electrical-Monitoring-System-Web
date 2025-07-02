@@ -14,6 +14,8 @@
     <canvas id="chartVLL" height="100"></canvas>
     <h4 class="text-lg font-bold mt-6">Arus</h4>
     <canvas id="chartArus" height="100"></canvas>
+    <h4 class="text-lg font-bold mt-6">Daya Aktif</h4>
+    <canvas id="chartDaya" height="100"></canvas>
     <h4 class="text-lg font-bold mt-6">Penggunaan Energi</h4>
     <form method="GET" action="{{ url('/') }}">
         <select name="interval" onchange="this.form.submit()" getElementId="chartEnergi">
@@ -29,11 +31,12 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // Untuk Grafik Tegangan
         const ctxVLN = document.getElementById('chartL2N').getContext('2d');
         const chart = new Chart(ctxVLN, {
             type: 'line',
             data: {
-                labels: {!! json_encode($labels) !!},
+                labels: {!! json_encode($realtimeLabels) !!},
                 datasets: [
                     {
                         label: 'Tegangan R',
@@ -78,11 +81,13 @@
             }
             
         });
+
+        // Untuk Grafik Tegangan 3 Fasa
         const ctxVLL = document.getElementById('chartVLL').getContext('2d');
         const chartVLL = new Chart(ctxVLL, {
             type: 'line',
             data: {
-                labels: {!! json_encode($labels) !!},
+                labels: {!! json_encode($realtimeLabels) !!},
                 datasets: [
                     {
                         label: 'Tegangan RS',
@@ -132,11 +137,13 @@
                 }
             }
         });
+
+        // Untuk Grafik Arus
         const ctxArus = document.getElementById('chartArus').getContext('2d');
         const chartArus = new Chart(ctxArus, {
             type: 'line',
             data: {
-                labels: {!! json_encode($labels) !!},
+                labels: {!! json_encode($realtimeLabels) !!},
                 datasets: [
                     {
                         label: 'Arus R',
@@ -187,11 +194,68 @@
             }
         });
 
+        // Untuk Grafik Daya
+        const ctxDaya = document.getElementById('chartDaya').getContext('2d');
+        const chartDaya = new Chart(ctxDaya, {
+            type: 'line',
+            data: {
+                labels: {!! json_encode($realtimeLabels) !!},
+                datasets: [
+                    {
+                        label: 'Daya R',
+                        data: {!! json_encode($daya_r) !!},
+                        borderColor: 'rgba(255, 99, 132, 1)', // Merah
+                        tension: 0.2,
+                        fill: false
+                    },
+                    {
+                        label: 'Daya S',
+                        data: {!! json_encode($daya_s) !!},
+                        borderColor: 'rgba(75, 192, 192, 1)', // Hijau/Cyan
+                        tension: 0.2,
+                        fill: false
+                    },
+                    {
+                        label: 'Daya T',
+                        data: {!! json_encode($daya_t) !!},
+                        borderColor: 'rgba(54, 162, 235, 1)', // Biru
+                        tension: 0.2,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Grafik Daya Aktif R/S/T'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Daya (Watt)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Waktu'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Untuk Grafik Energi
         const ctxEnergi = document.getElementById('chartEnergi').getContext('2d');
         new Chart(ctxEnergi, {
             type: 'bar',
             data: {
-                labels: {!! json_encode($labels) !!},
+                labels: {!! json_encode($intervalLabels) !!},
                 datasets: [
                     {
                         label: 'Energi R (kWh)',
@@ -231,11 +295,13 @@
                 }
             }
         });
+
+        // Untuk Grafik Frekuensi
         const ctxFreq = document.getElementById('chartFrekuensi').getContext('2d');
         new Chart(ctxFreq, {
             type: 'line',
             data: {
-                labels: {!! json_encode($labels) !!},
+                labels: {!! json_encode($intervalLabels) !!},
                 datasets: [
                     {
                     label: 'Frekuensi R',
@@ -276,11 +342,13 @@
                 }
             }
         });
+
+        // Untuk Grafik Faktor Daya
         const ctxCosphi = document.getElementById('chartCosphi').getContext('2d');
         new Chart(ctxCosphi, {
             type: 'line',
             data: {
-                labels: {!! json_encode($labels) !!},
+                labels: {!! json_encode($intervalLabels) !!},
                 datasets: [
                     {
                         label: 'Cosphi R',
