@@ -8,6 +8,12 @@
 </head>
 <body>
     <h1>Data Pemantauan Energi Listrik 3 Fasa</h1>
+    <div style="margin: 20px 0;">
+        <a href="{{ route('export.excel') }}" 
+        style="background-color: #217346; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px;">
+        Download Data (Excel)
+        </a>
+    </div>
     <h4 class="text-lg font-bold mt-6">Tegangan Line-to-Neutral</h4>
     <canvas id="chartL2N" height="100"></canvas>
     <h4 class="text-lg font-bold mt-6">Tegangan Line-To-Line</h4>

@@ -6,9 +6,12 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\EnergiListrik;
 use Illuminate\Support\Facades\DB;
+use App\Exports\EnergiListrikExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class EnergiListrikController extends Controller
 {
+    // untuk menampilkan dashboard
     public function index(Request $request)
     {
         $latestData = EnergiListrik::orderBy('waktu', 'desc')->take(20)->get()->reverse();
@@ -101,5 +104,10 @@ class EnergiListrikController extends Controller
             'faktor_daya_t',
             'interval'
         ));
+    }
+    // untuk export data energi listrik ke Excel
+    public function exportExcel()
+    {
+        return Excel::download(new EnergiListrikExport, 'energi_listrik-' . now()->format('Y-m-d_H-i-s') . '.xlsx');
     }
 }

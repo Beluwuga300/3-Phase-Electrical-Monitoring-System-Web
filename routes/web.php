@@ -7,3 +7,4 @@ use App\Http\Controllers\EnergiListrikController;
 //     return view('welcome');
 // });
 Route::get('/', [EnergiListrikController::class, 'index'])->name('dashboard');
+Route::get('/export/excel', [EnergiListrikController::class, 'exportExcel'])->name('export.excel');
