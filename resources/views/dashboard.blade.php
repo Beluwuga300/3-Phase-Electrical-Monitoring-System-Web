@@ -22,14 +22,12 @@
     <canvas id="chartArus" height="100"></canvas>
     <h4 class="text-lg font-bold mt-6">Daya Aktif</h4>
     <canvas id="chartDaya" height="100"></canvas>
+    <select name="interval" id="intervalSelect" style="padding: 5px; font-size: 16px;">
+        <option value="300">Per 5 Menit</option>
+        <option value="1800" selected>Per 30 Menit</option>
+        <option value="3600">Per Jam</option>
+    </select>
     <h4 class="text-lg font-bold mt-6">Penggunaan Energi</h4>
-    <form method="GET" action="{{ url('/') }}">
-        <select name="interval" onchange="this.form.submit()" getElementId="chartEnergi">
-            <option value="300" {{ $interval == 300 ? 'selected' : '' }}>Per 5 Menit</option>
-            <option value="1800" {{ $interval == 1800 ? 'selected' : '' }}>Per 30 Menit</option>
-            <option value="3600" {{ $interval == 3600 ? 'selected' : '' }}>Per Jam</option>
-        </select>
-    </form>
     <canvas id="chartEnergi" height="100"></canvas>
     <canvas id="chartFrekuensi" height="80"></canvas>
     <canvas id="chartCosphi" height="100"></canvas>
@@ -37,9 +35,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Untuk Grafik Tegangan
-        const ctxVLN = document.getElementById('chartL2N').getContext('2d');
-        const chart = new Chart(ctxVLN, {
+        let lastTimestamp = ''; // untuk menyimpan timestamp terakhir yang digunakan
+        // Untuk Grafik Tegangan Line-to-Neutral
+        const chartL2N = new Chart(document.getElementById('chartL2N'), {
             type: 'line',
             data: {
                 labels: {!! json_encode($realtimeLabels) !!},
@@ -47,23 +45,17 @@
                     {
                         label: 'Tegangan R',
                         data: {!! json_encode($tegangan_r) !!},
-                        borderColor: 'red',
-                        fill: false,
-                        tension: 0.4
+                        borderColor: 'red'
                     },
                     {
                         label: 'Tegangan S',
                         data: {!! json_encode($tegangan_s) !!},
-                        borderColor: 'green',
-                        fill: false,
-                        tension: 0.4
+                        borderColor: 'green'
                     },
                     {
                         label: 'Tegangan T',
                         data: {!! json_encode($tegangan_t) !!},
-                        borderColor: 'blue',
-                        fill: false,
-                        tension: 0.4
+                        borderColor: 'blue' 
                     },
                 ]
             },
@@ -85,12 +77,10 @@
                     }
                 }
             }
-            
         });
 
         // Untuk Grafik Tegangan 3 Fasa
-        const ctxVLL = document.getElementById('chartVLL').getContext('2d');
-        const chartVLL = new Chart(ctxVLL, {
+        const chartVLL = new Chart(document.getElementById('chartVLL'), {
             type: 'line',
             data: {
                 labels: {!! json_encode($realtimeLabels) !!},
@@ -98,23 +88,17 @@
                     {
                         label: 'Tegangan RS',
                         data: {!! json_encode($v_rs) !!},
-                        borderColor: 'rgba(255, 99, 132, 1)',
-                        tension: 0.3,
-                        fill: false
+                        borderColor: '#f26c0c'
                     },
                     {
                         label: 'Tegangan ST',
                         data: {!! json_encode($v_st) !!},
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        tension: 0.3,
-                        fill: false
+                        borderColor: '#33f81d'
                     },
                     {
-                        label: 'Tegangan TR',
+                        label: 'Tegangan RT',
                         data: {!! json_encode($v_tr) !!},
-                        borderColor: 'rgba(255, 206, 86, 1)',
-                        tension: 0.3,
-                        fill: false
+                        borderColor: '#f81d5f'
                     }
                 ]
             },
@@ -145,8 +129,7 @@
         });
 
         // Untuk Grafik Arus
-        const ctxArus = document.getElementById('chartArus').getContext('2d');
-        const chartArus = new Chart(ctxArus, {
+        const chartArus = new Chart(document.getElementById('chartArus'), {
             type: 'line',
             data: {
                 labels: {!! json_encode($realtimeLabels) !!},
@@ -154,23 +137,17 @@
                     {
                         label: 'Arus R',
                         data: {!! json_encode($arus_r) !!},
-                        borderColor: 'rgba(255, 99, 132, 1)',
-                        tension: 0.2,
-                        fill: false
+                        borderColor: '#8d1191'
                     },
                     {
                         label: 'Arus S',
                         data: {!! json_encode($arus_s) !!},
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        tension: 0.2,
-                        fill: false
+                        borderColor: '#0c8d11'
                     },
                     {
                         label: 'Arus T',
                         data: {!! json_encode($arus_t) !!},
-                        borderColor: 'rgba(153, 102, 255, 1)',
-                        tension: 0.2,
-                        fill: false
+                        borderColor: '#11918d'
                     }
                 ]
             },
@@ -200,9 +177,8 @@
             }
         });
 
-        // Untuk Grafik Daya
-        const ctxDaya = document.getElementById('chartDaya').getContext('2d');
-        const chartDaya = new Chart(ctxDaya, {
+        // Untuk Grafik Daya Aktif
+        const chartDaya = new Chart(document.getElementById('chartDaya'), {
             type: 'line',
             data: {
                 labels: {!! json_encode($realtimeLabels) !!},
@@ -210,23 +186,17 @@
                     {
                         label: 'Daya R',
                         data: {!! json_encode($daya_r) !!},
-                        borderColor: 'rgba(255, 99, 132, 1)', // Merah
-                        tension: 0.2,
-                        fill: false
+                        borderColor: '#11d4d0'
                     },
                     {
                         label: 'Daya S',
                         data: {!! json_encode($daya_s) !!},
-                        borderColor: 'rgba(75, 192, 192, 1)', // Hijau/Cyan
-                        tension: 0.2,
-                        fill: false
+                        borderColor: '#d01111'
                     },
                     {
                         label: 'Daya T',
                         data: {!! json_encode($daya_t) !!},
-                        borderColor: 'rgba(54, 162, 235, 1)', // Biru
-                        tension: 0.2,
-                        fill: false
+                        borderColor: '#d0d011'
                     }
                 ]
             },
@@ -257,26 +227,25 @@
         });
 
         // Untuk Grafik Energi
-        const ctxEnergi = document.getElementById('chartEnergi').getContext('2d');
-        new Chart(ctxEnergi, {
+        const chartEnergi = new Chart(document.getElementById('chartEnergi'), {
             type: 'bar',
             data: {
                 labels: {!! json_encode($intervalLabels) !!},
                 datasets: [
                     {
-                        label: 'Energi R (kWh)',
+                        label: 'Energi R',
                         data: {!! json_encode($energi_r) !!},
-                        backgroundColor: 'rgba(255, 99, 132, 0.6)'
+                        backgroundColor: 'red'
                     },
                     {
-                        label: 'Energi S (kWh)',
+                        label: 'Energi S',
                         data: {!! json_encode($energi_s) !!},
-                        backgroundColor: 'rgba(54, 162, 235, 0.6)'
+                        backgroundColor: 'green'
                     },
                     {
-                        label: 'Energi T (kWh)',
+                        label: 'Energi T',
                         data: {!! json_encode($energi_t) !!},
-                        backgroundColor: 'rgba(255, 206, 86, 0.6)'
+                        backgroundColor: 'blue'
                     }
                 ]
             },
@@ -303,32 +272,28 @@
         });
 
         // Untuk Grafik Frekuensi
-        const ctxFreq = document.getElementById('chartFrekuensi').getContext('2d');
-        new Chart(ctxFreq, {
+        const chartFrekuensi = new Chart(document.getElementById('chartFrekuensi'), {
             type: 'line',
             data: {
                 labels: {!! json_encode($intervalLabels) !!},
                 datasets: [
                     {
-                    label: 'Frekuensi R',
-                    data: {!! json_encode($frekuensi_r) !!},
-                    borderColor: 'rgba(132, 99, 255, 0.5)',
-                    tension: 0.3,
-                    fill: false
+                        label: 'Frekuensi R',
+                        data: {!! json_encode($frekuensi_r) !!},
+                        borderColor: '#a30ee3',
+                        fill: false
                     },
                     {
-                    label: 'Frekuensi S',
-                    data: {!! json_encode($frekuensi_s) !!},
-                    borderColor: 'rgba(99, 255, 132, 0.5)',
-                    tension: 0.3,
-                    fill: false
+                        label: 'Frekuensi S',
+                        data: {!! json_encode($frekuensi_s) !!},
+                        borderColor: '#9ef229',
+                        fill: false
                     },
                     {
-                    label: 'Frekuensi T',
-                    data: {!! json_encode($frekuensi_t) !!},
-                    borderColor: 'rgba(255, 132, 99, 0.5)',
-                    tension: 0.3,
-                    fill: false
+                        label: 'Frekuensi T',
+                        data: {!! json_encode($frekuensi_t) !!},
+                        borderColor: '#2998f2',
+                        fill: false
                     }
                 ]
             },
@@ -343,39 +308,39 @@
                 scales: {
                     y: {
                         suggestedMin: 49.5,
-                        suggestedMax: 50.5
+                        suggestedMax: 50.5,
+                        title: {
+                            display: true,
+                            text: 'Frekuensi (Hz)'
+                        }
                     }
                 }
             }
         });
 
         // Untuk Grafik Faktor Daya
-        const ctxCosphi = document.getElementById('chartCosphi').getContext('2d');
-        new Chart(ctxCosphi, {
+        const chartCosphi = new Chart(document.getElementById('chartCosphi'), {
             type: 'line',
             data: {
                 labels: {!! json_encode($intervalLabels) !!},
                 datasets: [
                     {
-                        label: 'Cosphi R',
+                        label: 'Faktor Daya R',
                         data: {!! json_encode($faktor_daya_r) !!},
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        fill: false,
-                        tension: 0.3
+                        borderColor: '#ff6384',
+                        fill: false
                     },
                     {
-                        label: 'Cosphi S',
+                        label: 'Faktor Daya S',
                         data: {!! json_encode($faktor_daya_s) !!},
-                        borderColor: 'rgba(255, 99, 132, 1)',
-                        fill: false,
-                        tension: 0.3
+                        borderColor: '#36a2eb',
+                        fill: false
                     },
                     {
-                        label: 'Cosphi T',
+                        label: 'Faktor Daya T',
                         data: {!! json_encode($faktor_daya_t) !!},
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        fill: false,
-                        tension: 0.3
+                        borderColor: '#cc65fe',
+                        fill: false
                     }
                 ]
             },
@@ -398,6 +363,75 @@
                     }
                 }
             }
+        });
+
+        async function updateCharts() {
+            // Mengambil data awal dari server
+            try {
+                const response = await fetch(`{{ route('data.update') }}?last_timestamp=${lastTimestamp}`);
+                const responseData = await response.json();
+
+                if (responseData.newData && responseData.newData.length > 0) {
+                    responseData.newData.forEach(dataPoint => {
+                        const newLabel = new Date(dataPoint.waktu).toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                        });
+                        const chartsToUpdate = [
+                            chartL2N, chartVLL, chartArus, chartDaya
+                        ];
+                        if (chartsToUpdate[0].data.labels.length >= 20) {
+                            chartsToUpdate.forEach(chart => {
+                                chart.data.labels.shift(); // Hapus label pertama
+                                chart.data.datasets.forEach(dataset => {
+                                    dataset.data.shift(); // Hapus data pertama untuk setiap dataset
+                                });
+                            });
+                        }
+                        chartL2N.data.labels.push(newLabel);
+                        chartL2N.data.datasets[0].data.push(dataPoint.tegangan_r);
+                        chartL2N.data.datasets[1].data.push(dataPoint.tegangan_s);
+                        chartL2N.data.datasets[2].data.push(dataPoint.tegangan_t);
+
+                        chartVLL.data.labels.push(newLabel);
+                        chartVLL.data.datasets[0].data.push(dataPoint.tegangan_rs);
+                        chartVLL.data.datasets[1].data.push(dataPoint.tegangan_st);
+                        chartVLL.data.datasets[2].data.push(dataPoint.tegangan_tr);
+
+                        chartArus.data.labels.push(newLabel);
+                        chartArus.data.datasets[0].data.push(dataPoint.arus_r);
+                        chartArus.data.datasets[1].data.push(dataPoint.arus_s);
+                        chartArus.data.datasets[2].data.push(dataPoint.arus_t);
+
+                        chartDaya.data.labels.push(newLabel);
+                        chartDaya.data.datasets[0].data.push(dataPoint.daya_r);
+                        chartDaya.data.datasets[1].data.push(dataPoint.daya_s);
+                        chartDaya.data.datasets[2].data.push(dataPoint.daya_t);
+                    });
+                    lastTimestamp = responseData.newData[responseData.newData.length - 1].waktu; // Update timestamp terakhir
+
+                    //update chart real-time
+                    chartL2N.update('none'); //update tanpa animasi
+                    chartVLL.update('none');
+                    chartArus.update('none');
+                    chartDaya.update('none');
+                }
+            } catch (error) {
+                console.error('Gagal mengambil data update:', error);
+            }
+        }
+        // 1. memanggil saat halam selesai dimuat untuk mengisi data awal
+        document.addEventListener('DOMContentLoaded', updateCharts);
+
+        // 2. set interval untuk mengecek data baru setiap 2 detuk
+        setInterval(updateCharts, 2000);
+
+        // 3. saat dropdown diubah, reload halaaman
+        document.getElementById('intervalSelect').addEventListener('change', function() {
+            const selectedInterval = this.value;
+            // reload halaman dengan parameter interval yang dipilih
+            window.location.href = `{{ route('dashboard') }}?interval=${selectedInterval}`;
         });
     </script>
 </body>
