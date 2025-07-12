@@ -34,8 +34,62 @@
 
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css" />
+        <script src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js"></script>
     <script>
-        let lastTimestamp = ''; // untuk menyimpan timestamp terakhir yang digunakan
+        // --- Konfigurasi Alert Tegangan ---
+        const minVoltage = 200; // batas bawah tegangan normal (Volt)
+        const maxVoltage = 240; // batas atas tegangan normal (Volt)
+        let alertActive = false; // status apakah toast sedang tampil
+        let toastAlert = null;
+        let currentAlertType = null;
+
+        function showVoltageAlert(type = 'out') {
+            if (alertActive) {
+                if (type === currentAlertType) {
+                    return; // toast sama sudah tampil
+                }
+                // Jenis alert berubah, sembunyikan toast lama
+                if (toastAlert) {
+                    iziToast.hide(toastAlert);
+                }
+            }
+            alertActive = true;
+            currentAlertType = type;
+            const options = {
+                position: 'topRight',
+                close: true,
+                timeout: 3000,
+                onClosed: function(){
+                    alertActive = false;
+                    toastAlert = null;
+                    currentAlertType = null;
+                }
+            };
+            if (type === 'undervolt') {
+                options.title = 'Undervoltage';
+                options.message = 'Tegangan terlalu rendah!';
+                toastAlert = iziToast.warning(options);
+            } else if (type === 'overvolt') {
+                options.title = 'Overvoltage';
+                options.message = 'Tegangan terlalu tinggi!';
+                toastAlert = iziToast.error(options);
+            } else {
+                options.title = 'Peringatan';
+                options.message = 'Tegangan di luar batas normal.';
+                toastAlert = iziToast.warning(options);
+            }
+        }
+
+        function hideVoltageAlert() {
+            if (!alertActive) return;
+            if (toastAlert) {
+                iziToast.hide(toastAlert);
+            }
+            alertActive = false;
+            toastAlert = null;
+            currentAlertType = null;
+        }
         // Untuk Grafik Tegangan Line-to-Neutral
         const chartL2N = new Chart(document.getElementById('chartL2N'), {
             type: 'line',
@@ -416,6 +470,24 @@
                     chartVLL.update('none');
                     chartArus.update('none');
                     chartDaya.update('none');
+
+                    // --- Cek kondisi tegangan untuk alert ---
+                    if (responseData.newData && responseData.newData.length > 0) {
+                        const latest = responseData.newData[responseData.newData.length - 1];
+                        const voltages = [latest.tegangan_r, latest.tegangan_s, latest.tegangan_t];
+                        const inRange = voltages.every(v => v >= minVoltage && v <= maxVoltage);
+                        if (!inRange) {
+                            const minV = Math.min(...voltages);
+                            const maxV = Math.max(...voltages);
+                            if (minV < minVoltage) {
+                                showVoltageAlert('undervolt');
+                            } else {
+                                showVoltageAlert('overvolt');
+                            }
+                        } else {
+                            hideVoltageAlert();
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('Gagal mengambil data update:', error);
