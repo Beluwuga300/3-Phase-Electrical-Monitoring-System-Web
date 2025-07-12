@@ -37,6 +37,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css" />
         <script src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js"></script>
     <script>
+        let lastTimestamp = '{{ now()->timestamp }}'; // untuk menyimpan timestamp terakhir yang digunakan
         // --- Konfigurasi Alert Tegangan ---
         const minVoltage = 200; // batas bawah tegangan normal (Volt)
         const maxVoltage = 240; // batas atas tegangan normal (Volt)
@@ -422,7 +423,11 @@
         async function updateCharts() {
             // Mengambil data awal dari server
             try {
-                const response = await fetch(`{{ route('data.update') }}?last_timestamp=${lastTimestamp}`);
+                // Bangun URL: sertakan parameter hanya jika lastTimestamp sudah terset
+                const url = lastTimestamp
+                    ? `{{ route('data.update') }}?lastTimestamp=${lastTimestamp}`
+                    : `{{ route('data.update') }}`;
+                const response = await fetch(url);
                 const responseData = await response.json();
 
                 if (responseData.newData && responseData.newData.length > 0) {
