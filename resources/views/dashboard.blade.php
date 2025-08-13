@@ -35,7 +35,9 @@
     </select>
     <h4 class="text-lg font-bold mt-6">Penggunaan Energi</h4>
     <canvas id="chartEnergi" height="100"></canvas>
+    <h4 class="text-lg font-bold mt-6">Frekuensi</h4>
     <canvas id="chartFrekuensi" height="80"></canvas>
+    <h4 class="text-lg font-bold mt-6">Cosphi</h4>
     <canvas id="chartCosphi" height="100"></canvas>
 
 
@@ -460,9 +462,9 @@
                         chartL2N.data.datasets[2].data.push(dataPoint.tegangan_t);
 
                         chartVLL.data.labels.push(newLabel);
-                        chartVLL.data.datasets[0].data.push(dataPoint.tegangan_rs);
-                        chartVLL.data.datasets[1].data.push(dataPoint.tegangan_st);
-                        chartVLL.data.datasets[2].data.push(dataPoint.tegangan_tr);
+                        chartVLL.data.datasets[0].data.push(dataPoint.voltage_rs);
+                        chartVLL.data.datasets[1].data.push(dataPoint.voltage_st);
+                        chartVLL.data.datasets[2].data.push(dataPoint.voltage_tr);
 
                         chartArus.data.labels.push(newLabel);
                         chartArus.data.datasets[0].data.push(dataPoint.arus_r);

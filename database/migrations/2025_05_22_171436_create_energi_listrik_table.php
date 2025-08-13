@@ -13,7 +13,7 @@ return new class extends migration
     {
         Schema::create('energi_listrik', function (Blueprint $table) {
             $table->id();
-            $table->dateTime('waktu');
+            $table->dateTime('waktu')->useCurrent();
             // $table->char('fasa'); // 'R', 'S', atau 'T'
             $table->float('tegangan_r');
             $table->float('tegangan_s');
