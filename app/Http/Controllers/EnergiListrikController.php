@@ -61,6 +61,10 @@ class EnergiListrikController extends Controller
         $faktor_daya_s = $aggregatedData->pluck('faktor_daya_s');
         $faktor_daya_t = $aggregatedData->pluck('faktor_daya_t');
 
+        // Ambil UNIX timestamp terakhir untuk inisialisasi realtime
+        $lastRecord = $latestData->last();
+        $lastTimestamp = $lastRecord ? Carbon::parse($lastRecord->waktu)->timestamp : null;
+
         // Kirim semua data sekaligus dalam satu paket JSON
         return view('dashboard', compact(
             'realtimeLabels',
@@ -86,7 +90,8 @@ class EnergiListrikController extends Controller
             'faktor_daya_r',
             'faktor_daya_s',
             'faktor_daya_t',
-            'interval' // untuk mengirimkan interval ke view
+            'interval', // untuk mengirimkan interval ke view
+            'lastTimestamp'
         ));
     }
     // untuk export data energi listrik ke Excel
@@ -98,24 +103,37 @@ class EnergiListrikController extends Controller
     // untuk AJAX data update
     public function dataUpdate(Request $request)
     {
-        $lastTimestamp = $request->get('lastTimestamp'); //untuk mendapatkan timestamp terakhir dari permintaan AJAX
+        $lastTimestamp = $request->get('lastTimestamp'); // timestamp UNIX terakhir dari frontend
 
-        $query = EnergiListrik::orderBy('waktu', 'asc'); // Urutkan berdasarkan waktu secara ascending
-        // untuk mengambil data baru berdasarkan timestamp terakhir
+        // Ambil data baru dengan dua cabang yang jelas (dengan/ tanpa lastTimestamp)
         if ($lastTimestamp) {
-            $query->where('waktu', '>', $lastTimestamp);
+            // Bandingkan kolom datetime dengan Carbon dari UNIX timestamp agar akurat
+            $threshold = Carbon::createFromTimestamp((int) $lastTimestamp);
+            $newData = EnergiListrik::where('waktu', '>', $threshold)
+                ->orderBy('waktu', 'asc')
+                ->get();
+
+            if ($newData->isEmpty()) {
+                return response()->json(['newData' => []]);
+            }
         } else {
-            $query->orderBy('waktu', 'desc')->take(20); // Ambil 20 data terbaru jika tidak ada lastTimestamp
+            // Ambil 20 data terbaru lalu urutkan ascending untuk ditampilkan ke grafik
+            $newData = EnergiListrik::orderBy('waktu', 'desc')
+                ->take(20)
+                ->get()
+                ->reverse()
+                ->values();
         }
-        // untuk mengambil data baru
-        $newData = $query->get();
-        if ($newData->isEmpty() && $lastTimestamp) {
-            return response()->json(['newData' => []]);
-        }
-        if (!$lastTimestamp) {
-            $newData = $newData->reverse()->values();
-        }
-        // untuk mengubah format waktu menjadi string yang dapat dibaca
+
+        // Normalisasi waktu agar mudah diparse di frontend
+        $newData = $newData->map(function ($row) {
+            $arr = $row->toArray();
+            $dt = Carbon::parse($row->waktu);
+            $arr['waktu_iso'] = $dt->toIso8601String();
+            $arr['waktu_unix'] = $dt->timestamp;
+            return $arr;
+        });
+
         return response()->json(['newData' => $newData]);
     }
 }
