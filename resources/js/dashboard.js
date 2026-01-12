@@ -82,6 +82,7 @@
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       scales: {
         y: { beginAtZero: true, title: { display: true, text: 'Tegangan (V)' } },
         x: { title: { display: true, text: 'Waktu' } },
@@ -106,6 +107,7 @@
         y: { beginAtZero: true, title: { display: true, text: 'Volt (V)' } },
         x: { title: { display: true, text: 'Waktu' } },
       },
+      maintainAspectRatio: false,
     },
   });
 
@@ -126,6 +128,7 @@
         y: { beginAtZero: true, title: { display: true, text: 'Ampere (A)' } },
         x: { title: { display: true, text: 'Waktu' } },
       },
+      maintainAspectRatio: false,
     },
   });
 
@@ -146,6 +149,7 @@
         y: { beginAtZero: true, title: { display: true, text: 'Daya (Watt)' } },
         x: { title: { display: true, text: 'Waktu' } },
       },
+      maintainAspectRatio: false,
     },
   });
 
@@ -166,6 +170,7 @@
         y: { beginAtZero: true },
         x: { title: { display: true, text: 'Waktu' } },
       },
+      maintainAspectRatio: false,
     },
   });
 
@@ -189,6 +194,7 @@
           title: { display: true, text: 'Frekuensi (Hz)' },
         },
       },
+      maintainAspectRatio: false,
     },
   });
 
@@ -208,6 +214,7 @@
       scales: {
         y: { min: 0, max: 1, title: { display: true, text: 'Nilai Cosphi' } },
       },
+      maintainAspectRatio: false,
     },
   });
 
